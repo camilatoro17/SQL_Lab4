@@ -24,18 +24,32 @@ SET search_path = history;
     year 2000?  (2 columns, 2 rows)
 */
 
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.id IN (SELECT t.pioneer_id 
+               FROM turing_award t 
+               WHERE year_awarded < 2000);
+
 
 /*
     2. Which pioneers (first name, last name) did not win a Turing Award? 
     (2 columns, 13 rows)
 */
 
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.id NOT IN (SELECT t.pioneer_id 
+                   FROM turing_award t);
 
 /* 
    3. Which organizations (name only) have no associated pioneer?  
    (1 column, 1 row)
 */
 
+SELECT org.name
+FROM organization org
+WHERE org.id NOT IN (SELECT xref.organization_id 
+                     FROM pioneer_org_xref xref);
 
 /* 
    4. For this question, you may not use IN or EXISTS.  
@@ -43,17 +57,38 @@ SET search_path = history;
       (2 columns, 1 row)
  */
 
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.id = (SELECT t.pioneer_id
+              FROM turing_award t
+              WHERE year_awarded = 2014);
 
 /*
     5. Which pioneers (first, last) are associated with the organization
     "MySQL AB"? (2 columns, 3 rows)
 */
 
+--MySQL AB is id #5
+
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.id IN (SELECT xref.pioneer_id
+               FROM pioneer_org_xref xref
+               WHERE organization_id = 5);
 
 /*
     6. Which pioneers (first, last) founded organizations (i.e., have "Co-founder" in their role) between 1970 and 1990? (2 columns, 3 rows)
 */
 
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.id IN (SELECT xref.pioneer_id
+               FROM pioneer_org_xref xref
+               WHERE xref.role ILIKE '%founder%'
+               AND xref.organization_id IN (SELECT org.id
+                                            FROM organization org
+                                            WHERE founded >= 1970 AND founded <= 1990)
+               );
 
 /***************************************************************************
     GROUPING AND AGGREGATION.  You may use any other techniques (e.g. joins,
@@ -65,19 +100,25 @@ SET search_path = history;
     result to an integer.  (1 column, 1 row)
 */
 
+SELECT AVG(birth)::INTEGER
+FROM pioneer;
 
 /*
     8. How many pioneers were born in each year after 1940?  Give the birth
     year and the count, and order by birth year.  (2 columns, 6 rows)
 */
 
+SELECT birth, COUNT(*)
+FROM pioneer
+WHERE birth > 1940
+GROUP BY birth
+ORDER BY birth;
 
 /*
     9. Which pioneers are associated with more than one organization?  Give 
     the first and last name of the pioneer and the number of organizations 
     they are associated with.  (3 columns, 4 rows)
 */
-
 
 /*
     10. Which organizations are associated with more than one pioneer who are 
