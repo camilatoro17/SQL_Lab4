@@ -120,12 +120,25 @@ ORDER BY birth;
     they are associated with.  (3 columns, 4 rows)
 */
 
+SELECT p.first, p.last, COUNT(xref.organization_id) AS num_orgs
+FROM pioneer p
+JOIN pioneer_org_xref xref ON xref.pioneer_id = p.id
+GROUP BY p.first, p.last
+HAVING COUNT(xref.organization_id) > 1;
+
 /*
     10. Which organizations are associated with more than one pioneer who are 
     now deceased?  Give the organization name and the number of associated 
     deceased pioneers. (2 columns, 1 row)
 */
 
+SELECT org.name, COUNT(xref.pioneer_id) AS num_dead
+FROM pioneer_org_xref xref
+JOIN organization org ON xref.organization_id = org.id
+JOIN pioneer p ON xref.pioneer_id = p.id
+WHERE p.death IS NOT NULL
+GROUP BY org.name
+HAVING COUNT(xref.pioneer_id) > 1;
 
 /***************************************************************************
     SET OPERATIONS.  While these can be answered in other ways, 
@@ -137,11 +150,27 @@ ORDER BY birth;
     1930? (2 columns, 5 rows)
 */
 
+SELECT p.first, p.last
+FROM pioneer p
+JOIN turing_award t ON t.pioneer_id = p.id
+UNION
+SELECT p.first, p.last
+FROM pioneer p
+WHERE p.birth < 1930;
 
 /*
     12. Which pioneers (first, last) were associated with University of California - Berkeley and won a Turing award? (2 columns, 1 row)
 */
 
+SELECT p.first, p.last
+FROM pioneer p
+JOIN pioneer_org_xref xref ON p.id = xref.pioneer_id
+JOIN organization org ON xref.organization_id = org.id
+WHERE org.name = 'University of California - Berkeley'
+INTERSECT
+SELECT p.first, p.last
+FROM pioneer p
+JOIN turing_award t ON p.id = t.pioneer_id;
 
 /***************************************************************************
     CHALLENGE QUESTIONS.  You may use any techniques, including subqueries,
@@ -154,6 +183,13 @@ ORDER BY birth;
     last and approximate age at death. (3 columns, 1 row)
 */
 
+SELECT p.first, p.last, p.death - p.birth AS death_age
+FROM pioneer p
+WHERE p.death IS NOT NULL 
+            AND (p.death - p.birth) = (SELECT MAX(death - birth)
+                                       FROM pioneer
+                                       WHERE death IS NOT NULL);
+
 
 /*
     14. Provide a list of pioneers (first, last) who won Turing awards, along 
@@ -164,6 +200,14 @@ ORDER BY birth;
     give 4 columns and 3 rows such that all organizations are listed in the 
     same column.
 */
+
+SELECT p.first, p.last, COUNT(xref.organization_id) AS num_orgs, org.name
+FROM pioneer p
+JOIN pioneer_org_xref xref ON xref.pioneer_id = p.id
+JOIN organization org ON xref.organization_id = org.id
+JOIN turing_award t ON t.pioneer_id = p.id
+GROUP BY p.first, p.last, org.name;
+
 
 
 
