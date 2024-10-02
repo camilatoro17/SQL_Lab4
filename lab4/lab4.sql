@@ -74,7 +74,10 @@ SELECT p.first, p.last
 FROM pioneer p
 WHERE p.id IN (SELECT xref.pioneer_id
                FROM pioneer_org_xref xref
-               WHERE organization_id = 5);
+               WHERE organization_id = (SELECT id
+                                        FROM organization
+                                        WHERE name = 'MySQL AB')
+                );
 
 /*
     6. Which pioneers (first, last) founded organizations (i.e., have "Co-founder" in their role) between 1970 and 1990? (2 columns, 3 rows)
